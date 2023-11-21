@@ -1,72 +1,69 @@
-from cryptography.fernet import Fernet
-from PIL import Image
+import os  # Para obtener la extensión de la imagen
 
-# Función para cifrar una imagen
-def cifrar_imagen(ruta_imagen, clave, ruta_salida):
-    # Leer los bytes de la imagen desde el archivo
-    with open(ruta_imagen, "rb") as f:
-        bytes_imagen = f.read()
+def encrypt_image():
+    ruta_imagen = input("Por favor, ingresa la ruta de la imagen: ")
 
-    # Crear un objeto Fernet con la clave proporcionada
-    fernet = Fernet(clave)
+    while not os.path.exists(ruta_imagen):
+        print("La imagen no existe. Por favor, verifica la ruta e intenta nuevamente.")
+        ruta_imagen = input("Por favor, ingresa la ruta de la imagen: ")
 
-    # Cifrar los bytes de la imagen
-    bytes_cifrados = fernet.encrypt(bytes_imagen)
+    extension = os.path.splitext(ruta_imagen)[1].upper()
 
-    # Escribir los bytes cifrados en un nuevo archivo de salida
-    with open(ruta_salida, "wb") as f:
-        f.write(bytes_cifrados)
+    while extension not in [".JPEG", ".PNG", ".JPG"]:
+        print("Por favor, ingresa una imagen con extensión .JPEG, .PNG o .JPG.")
+        ruta_imagen = input("Por favor, ingresa la ruta de la imagen: ")
+        extension = os.path.splitext(ruta_imagen)[1].upper()
 
-# Función para descifrar una imagen
-def descifrar_imagen(ruta_imagen, clave, ruta_salida):
-    # Leer los bytes cifrados de la imagen desde el archivo
-    with open(ruta_imagen, "rb") as f:
-        bytes_cifrados = f.read()
+    if os.path.exists("imagen_encriptada.jpg"):
+        print("La imagen ya está encriptada. Por favor, desencripta la imagen existente o elige otra imagen.")
+        return
 
-    # Crear un objeto Fernet con la clave proporcionada
-    fernet = Fernet(clave)
+    numero = int(input("Por favor, ingresa un número (clave): "))
 
-    # Descifrar los bytes de la imagen
-    bytes_descifrados = fernet.decrypt(bytes_cifrados)
+    with open(ruta_imagen, "rb") as file:
+        image = bytearray(file.read())
 
-    # Escribir los bytes descifrados en un nuevo archivo de salida
-    with open(ruta_salida, "wb") as f:
-        f.write(bytes_descifrados)
+    for i, j in enumerate(image):
+        image[i] = j ^ numero
 
-# Función principal que actúa como un menú de consola
+    with open("imagen_encriptada.jpg", "wb") as file:
+        file.write(image)
+    print("Imagen encriptada y guardada como 'imagen_encriptada.jpg'.")
+
+def decrypt_image():
+    if not os.path.exists("imagen_encriptada.jpg"):
+        print("La imagen encriptada no existe. Por favor, encripta una imagen antes de intentar desencriptar.")
+        return
+
+    numero = int(input("Por favor, ingresa el número (clave): "))
+
+    with open("imagen_encriptada.jpg", "rb") as file:
+        image = bytearray(file.read())
+
+    for i, j in enumerate(image):
+        image[i] = j ^ numero
+
+    with open("decrypted.jpg", "wb") as file:
+        file.write(image)
+    print("Imagen desencriptada y guardada como 'decrypted.jpg'.")
+
 def main():
-    print("1. Cifrar Imagen")
-    print("2. Descifrar Imagen")
-    
-    # Solicitar al usuario que elija entre cifrar y descifrar
-    eleccion = input("Ingrese su elección (1 o 2): ")
+    while True:
+        print("\n1. Encriptar Imagen")
+        print("2. Desencriptar Imagen")
+        print("3. Salir")
 
-    # Generar una nueva clave Fernet
-    clave = Fernet.generate_key()
+        opcion = input("Selecciona una opción (1/2/3): ")
 
-    if eleccion == "1":
-        # Cifrar una imagen
-        ruta_imagen = input("Ingrese la ruta de la imagen: ")
-        ruta_salida = input("Ingrese la ruta para la imagen cifrada: ")
-        cifrar_imagen(ruta_imagen, clave, ruta_salida)
-        print("Imagen cifrada exitosamente.")
-    elif eleccion == "2":
-        # Descifrar una imagen
-        ruta_imagen = input("Ingrese la ruta de la imagen cifrada: ")
-        ruta_salida = input("Ingrese la ruta para la imagen descifrada: ")
-        descifrar_imagen(ruta_imagen, clave, ruta_salida)
-        print("Imagen descifrada exitosamente.")
-    else:
-        print("Elección no válida. Por favor, ingrese 1 o 2.")
+        if opcion == "1":
+            encrypt_image()
+        elif opcion == "2":
+            decrypt_image()
+        elif opcion == "3":
+            print("Saliendo del programa. ¡Hasta luego!")
+            break
+        else:
+            print("Opción no válida. Por favor, selecciona 1, 2 o 3.")
 
 if __name__ == "__main__":
     main()
-
-'''
-No me salio el codigo pero aqui estan las fuentes
-https://es.stackoverflow.com/questions/222412/python-c%c3%b3mo-encripto-archivos-usando-aes-crypto-cipher
-
-edgeservices.bing.com/edgesvc/redirect?url=https%3A%2F%2Fhashdork.com%2Fes%2Fcifrado-de-archivos-descifrado-usando-python%2F&hash=68245Xz2imXrvBW%2FDXzlE34BqYHTLf4vOTUsZ9sh244%3D&key=psc-underside&usparams=cvid%3A51D%7CBingProd%7CCDB65FB0C36EDECB58E9B8AEFD272DFE6C8CA3AC839A220BDC09A704CBF3A36D%5Ertone%3ABalanced
-
-https://medium.com/@FridaRuh/encriptar-y-desencriptar-datos-en-pyhon-con-cryptography-5b186c669801
-'''
